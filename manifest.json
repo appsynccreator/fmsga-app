@@ -1,6 +1,6 @@
 {
   "name": "FMSGA Integrated System",
-  "short_name": "FMSGA",
+  "short_name": "FMSGA MHBD",
   "description": "Facility Management System - Mayapada Hospital Bandung",
   "start_url": "./",
   "display": "standalone",
