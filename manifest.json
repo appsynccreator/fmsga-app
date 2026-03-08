@@ -1,0 +1,28 @@
+{
+  "name": "FMSGA Integrated System",
+  "short_name": "FMSGA",
+  "description": "Facility Management System - Mayapada Hospital Bandung",
+  "start_url": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0D7C66",
+  "theme_color": "#0D7C66",
+  "lang": "id",
+  "scope": "./",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "productivity"],
+  "screenshots": []
+}

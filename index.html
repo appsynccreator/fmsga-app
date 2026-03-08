@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="FMSGA">
+  <meta name="application-name" content="FMSGA">
+  <meta name="theme-color" content="#0D7C66">
+  <meta name="description" content="Facility Management System – Mayapada Hospital Bandung">
+
+  <title>FMSGA Integrated System</title>
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="manifest.json">
+
+  <!-- Apple Touch Icons (inline SVG → base64 sebagai fallback) -->
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="icon" type="image/png" href="icon-192.png">
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+
+  <style>
+    :root {
+      --teal: #0D7C66;
+      --teal-d: #095c4c;
+      --teal-l: #17B890;
+      --white: #ffffff;
+      --ease: cubic-bezier(.4,0,.2,1);
+    }
+
+    * { margin:0; padding:0; box-sizing:border-box; }
+
+    html, body {
+      width: 100%; height: 100%;
+      overflow: hidden;
+      background: var(--teal);
+      font-family: 'Poppins', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* ── SPLASH SCREEN ── */
+    #splash {
+      position: fixed; inset: 0; z-index: 9999;
+      background: linear-gradient(160deg, #063a2e 0%, #0D7C66 55%, #17B890 100%);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 0;
+      transition: opacity .5s var(--ease), visibility .5s;
+    }
+    #splash.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+
+    .splash-logo {
+      width: 88px; height: 88px;
+      background: rgba(255,255,255,.15);
+      border: 2px solid rgba(255,255,255,.3);
+      border-radius: 24px;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 22px;
+      animation: popIn .6s var(--ease) both;
+    }
+    .splash-logo span { font-size: 44px; color: #fff; }
+
+    .splash-title {
+      font-size: 2rem; font-weight: 800;
+      color: #fff; letter-spacing: -.5px;
+      animation: slideUp .5s var(--ease) .15s both;
+    }
+    .splash-sub {
+      font-size: .78rem; color: rgba(255,255,255,.65);
+      margin-top: 4px; text-align: center; line-height: 1.5;
+      animation: slideUp .5s var(--ease) .25s both;
+    }
+    .splash-loader {
+      margin-top: 48px;
+      width: 36px; height: 36px;
+      border: 3px solid rgba(255,255,255,.2);
+      border-top-color: rgba(255,255,255,.9);
+      border-radius: 50%;
+      animation: spin .75s linear infinite, slideUp .5s var(--ease) .35s both;
+    }
+    .splash-version {
+      position: absolute; bottom: max(24px, env(safe-area-inset-bottom));
+      font-size: .68rem; color: rgba(255,255,255,.35);
+      animation: slideUp .5s var(--ease) .4s both;
+    }
+
+    /* ── INSTALL BANNER ── */
+    #installBanner {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      z-index: 8888;
+      background: var(--white);
+      border-top: 1px solid #e0e7ef;
+      padding: 14px 18px max(14px, env(safe-area-inset-bottom));
+      display: none;
+      align-items: center; gap: 12px;
+      box-shadow: 0 -8px 32px rgba(0,0,0,.12);
+      animation: slideInUp .35s var(--ease);
+    }
+    #installBanner.show { display: flex; }
+    .ib-icon {
+      width: 44px; height: 44px; flex-shrink: 0;
+      background: linear-gradient(135deg, var(--teal), var(--teal-l));
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .ib-icon span { color: #fff; font-size: 22px; }
+    .ib-text { flex: 1; }
+    .ib-text strong { display: block; font-size: .82rem; color: #1a2736; }
+    .ib-text small { font-size: .72rem; color: #6b7a8d; }
+    .ib-btn {
+      background: var(--teal); color: #fff;
+      border: none; border-radius: 10px;
+      padding: 8px 16px; font-size: .78rem; font-weight: 600;
+      font-family: 'Poppins', sans-serif; cursor: pointer;
+      white-space: nowrap; flex-shrink: 0;
+    }
+    .ib-close {
+      background: none; border: none; cursor: pointer;
+      color: #aaa; padding: 4px; flex-shrink: 0;
+    }
+    .ib-close span { font-size: 18px; }
+
+    /* ── IOS INSTALL GUIDE ── */
+    #iosGuide {
+      position: fixed; inset: 0; z-index: 9000;
+      background: rgba(0,0,0,.55); backdrop-filter: blur(4px);
+      display: none; align-items: flex-end;
+    }
+    #iosGuide.show { display: flex; }
+    .ios-card {
+      background: #fff; border-radius: 20px 20px 0 0;
+      padding: 24px 20px max(24px, env(safe-area-inset-bottom));
+      width: 100%;
+      animation: slideInUp .3s var(--ease);
+    }
+    .ios-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 20px;
+    }
+    .ios-header strong { font-size: .95rem; color: #1a2736; }
+    .ios-close { background:none; border:none; cursor:pointer; color:#888; }
+    .ios-close span { font-size: 22px; }
+    .ios-steps { display: flex; flex-direction: column; gap: 14px; }
+    .ios-step {
+      display: flex; align-items: center; gap: 12px;
+    }
+    .ios-step-num {
+      width: 28px; height: 28px; flex-shrink: 0;
+      background: var(--teal); color: #fff;
+      border-radius: 50%; font-size: .72rem; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .ios-step-text { font-size: .8rem; color: #374151; line-height: 1.4; }
+    .ios-step-text b { color: var(--teal); }
+    .ios-share-icon {
+      display: inline-flex; align-items: center;
+      background: #f3f4f6; border-radius: 6px;
+      padding: 2px 6px; gap: 3px;
+      font-size: .7rem; color: #374151; font-weight: 600;
+    }
+    .ios-share-icon span { font-size: 14px; color: #007aff; }
+    .ios-divider { height:1px; background:#f0f0f0; margin: 4px 0; }
+
+    /* ── OFFLINE BANNER ── */
+    #offlineBanner {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 7777;
+      background: #b45309; color: #fff;
+      padding: 8px 16px; font-size: .72rem; font-weight: 600;
+      display: none; align-items: center; justify-content: center; gap: 6px;
+      text-align: center;
+    }
+    #offlineBanner.show { display: flex; }
+
+    /* ── UPDATE BANNER ── */
+    #updateBanner {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 7778;
+      background: var(--teal); color: #fff;
+      padding: 8px 16px; font-size: .72rem; font-weight: 600;
+      display: none; align-items: center; justify-content: space-between; gap: 8px;
+    }
+    #updateBanner.show { display: flex; }
+    #updateBanner button {
+      background: rgba(255,255,255,.2); border: 1px solid rgba(255,255,255,.4);
+      color: #fff; border-radius: 6px; padding: 3px 10px;
+      font-size: .7rem; font-family: 'Poppins',sans-serif; cursor: pointer;
+      white-space: nowrap;
+    }
+
+    /* ── APP FRAME ── */
+    #appFrame {
+      position: fixed; inset: 0;
+      padding-top: env(safe-area-inset-top);
+      background: #f4f7fa;
+    }
+    #appIframe {
+      width: 100%; height: 100%;
+      border: none; display: block;
+      opacity: 0; transition: opacity .4s var(--ease);
+    }
+    #appIframe.loaded { opacity: 1; }
+
+    /* Animasi */
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes popIn {
+      from { transform: scale(.7); opacity: 0; }
+      to   { transform: scale(1);  opacity: 1; }
+    }
+    @keyframes slideUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to   { transform: translateY(0);    opacity: 1; }
+    }
+    @keyframes slideInUp {
+      from { transform: translateY(100%); }
+      to   { transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- OFFLINE BANNER -->
+  <div id="offlineBanner">
+    <span class="material-icons-round" style="font-size:16px">wifi_off</span>
+    Tidak ada koneksi internet — beberapa fitur mungkin tidak tersedia
+  </div>
+
+  <!-- UPDATE BANNER -->
+  <div id="updateBanner">
+    <span>🔄 Versi terbaru tersedia</span>
+    <button onclick="applyUpdate()">Perbarui Sekarang</button>
+  </div>
+
+  <!-- SPLASH SCREEN -->
+  <div id="splash">
+    <div class="splash-logo">
+      <span class="material-icons-round">local_hospital</span>
+    </div>
+    <div class="splash-title">FMSGA</div>
+    <div class="splash-sub">Integrated System<br>Mayapada Hospital Bandung</div>
+    <div class="splash-loader"></div>
+    <div class="splash-version">v2.1.0 · MHBD · ext. 5920</div>
+  </div>
+
+  <!-- APP FRAME -->
+  <div id="appFrame">
+    <iframe
+      id="appIframe"
+      src="about:blank"
+      allow="camera; microphone; geolocation"
+      allowfullscreen
+    ></iframe>
+  </div>
+
+  <!-- INSTALL BANNER (Android) -->
+  <div id="installBanner">
+    <div class="ib-icon"><span class="material-icons-round">add_to_home_screen</span></div>
+    <div class="ib-text">
+      <strong>Pasang di layar utama</strong>
+      <small>Akses lebih cepat tanpa buka browser</small>
+    </div>
+    <button class="ib-btn" onclick="triggerInstall()">Pasang</button>
+    <button class="ib-close" onclick="dismissInstall()"><span class="material-icons-round">close</span></button>
+  </div>
+
+  <!-- IOS INSTALL GUIDE -->
+  <div id="iosGuide" onclick="if(event.target===this) closeIosGuide()">
+    <div class="ios-card">
+      <div class="ios-header">
+        <strong>📲 Pasang ke Layar Utama (iPhone/iPad)</strong>
+        <button class="ios-close" onclick="closeIosGuide()"><span class="material-icons-round">close</span></button>
+      </div>
+      <div class="ios-steps">
+        <div class="ios-step">
+          <div class="ios-step-num">1</div>
+          <div class="ios-step-text">
+            Ketuk tombol <span class="ios-share-icon"><span class="material-icons-round">ios_share</span> Share</span>
+            di bagian bawah browser Safari
+          </div>
+        </div>
+        <div class="ios-divider"></div>
+        <div class="ios-step">
+          <div class="ios-step-num">2</div>
+          <div class="ios-step-text">
+            Gulir ke bawah dan ketuk <b>"Add to Home Screen"</b> (Tambahkan ke Layar Utama)
+          </div>
+        </div>
+        <div class="ios-divider"></div>
+        <div class="ios-step">
+          <div class="ios-step-num">3</div>
+          <div class="ios-step-text">
+            Ketuk <b>"Add"</b> di pojok kanan atas — ikon FMSGA akan muncul di layar utama
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ── KONFIGURASI ──
+    // Ganti dengan URL deployment GAS parent yang sesungguhnya
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbxAmBgc2h3Gy28XqidXamri3RGBIioh90NEhL7TU2Eau3krve4tkIJkJxLksDJzltMV/exec';
+    // Contoh: 'https://script.google.com/macros/s/AKfyc.../exec'
+
+    const SPLASH_MIN = 1800; // ms minimum splash ditampilkan
+    const INSTALL_DISMISSED_KEY = 'fmsga_install_dismissed';
+
+    // ── STATE ──
+    let _deferredPrompt = null;
+    let _swReg = null;
+    let _frameLoaded = false;
+    let _splashDone = false;
+
+    // ── DETEKSI PLATFORM ──
+    const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    const isInStandalone = window.navigator.standalone === true ||
+      window.matchMedia('(display-mode: standalone)').matches;
+    const isAndroid = /android/i.test(navigator.userAgent);
+
+    // ── ONLINE / OFFLINE ──
+    function updateOnlineStatus() {
+      const banner = document.getElementById('offlineBanner');
+      if (!navigator.onLine) {
+        banner.classList.add('show');
+      } else {
+        banner.classList.remove('show');
+      }
+    }
+    window.addEventListener('online',  updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
+    updateOnlineStatus();
+
+    // ── SERVICE WORKER ──
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js').then(reg => {
+        _swReg = reg;
+        reg.addEventListener('updatefound', () => {
+          const newSW = reg.installing;
+          newSW.addEventListener('statechange', () => {
+            if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
+              document.getElementById('updateBanner').classList.add('show');
+            }
+          });
+        });
+      }).catch(e => console.warn('[SW] Register failed:', e));
+
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        window.location.reload();
+      });
+    }
+
+    function applyUpdate() {
+      if (_swReg && _swReg.waiting) {
+        _swReg.waiting.postMessage({ type: 'SKIP_WAITING' });
+      }
+      document.getElementById('updateBanner').classList.remove('show');
+      window.location.reload();
+    }
+
+    // ── INSTALL PROMPT (Android Chrome) ──
+    window.addEventListener('beforeinstallprompt', e => {
+      e.preventDefault();
+      _deferredPrompt = e;
+      const dismissed = sessionStorage.getItem(INSTALL_DISMISSED_KEY);
+      if (!dismissed && !isInStandalone) {
+        setTimeout(() => {
+          document.getElementById('installBanner').classList.add('show');
+        }, 3000);
+      }
+    });
+
+    function triggerInstall() {
+      document.getElementById('installBanner').classList.remove('show');
+      if (_deferredPrompt) {
+        _deferredPrompt.prompt();
+        _deferredPrompt.userChoice.then(r => {
+          console.log('[PWA] Install choice:', r.outcome);
+          _deferredPrompt = null;
+        });
+      }
+    }
+
+    function dismissInstall() {
+      sessionStorage.setItem(INSTALL_DISMISSED_KEY, '1');
+      document.getElementById('installBanner').classList.remove('show');
+    }
+
+    // ── IOS GUIDE ──
+    function showIosGuide() { document.getElementById('iosGuide').classList.add('show'); }
+    function closeIosGuide() { document.getElementById('iosGuide').classList.remove('show'); }
+
+    // Tampilkan iOS guide otomatis setelah splash jika di Safari iOS dan belum install
+    function maybeShowIosPrompt() {
+      if (isIos && !isInStandalone) {
+        const dismissed = sessionStorage.getItem(INSTALL_DISMISSED_KEY);
+        if (!dismissed) {
+          setTimeout(showIosGuide, 3500);
+        }
+      }
+    }
+
+    // ── SPLASH & FRAME LOADING ──
+    const splashStart = Date.now();
+
+    function hideSplash() {
+      const elapsed = Date.now() - splashStart;
+      const delay = Math.max(0, SPLASH_MIN - elapsed);
+      setTimeout(() => {
+        document.getElementById('splash').classList.add('hidden');
+        _splashDone = true;
+      }, delay);
+    }
+
+    function loadApp() {
+      const iframe = document.getElementById('appIframe');
+
+      // Validasi URL dulu
+      if (!GAS_URL || GAS_URL.includes('GANTI_DENGAN')) {
+        showConfigError();
+        hideSplash();
+        return;
+      }
+
+      iframe.addEventListener('load', () => {
+        _frameLoaded = true;
+        iframe.classList.add('loaded');
+        hideSplash();
+        maybeShowIosPrompt();
+      }, { once: true });
+
+      // Fallback jika iframe lambat
+      const timeout = setTimeout(() => {
+        if (!_frameLoaded) {
+          iframe.classList.add('loaded');
+          hideSplash();
+        }
+      }, 8000);
+
+      iframe.src = GAS_URL;
+    }
+
+    function showConfigError() {
+      document.getElementById('appFrame').innerHTML = `
+        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;
+          height:100%;padding:32px;text-align:center;background:linear-gradient(135deg,#063a2e,#0D7C66)">
+          <span class="material-icons-round" style="font-size:56px;color:rgba(255,255,255,.6);margin-bottom:16px">settings</span>
+          <h2 style="color:#fff;font-size:1.1rem;margin-bottom:8px">Konfigurasi Diperlukan</h2>
+          <p style="color:rgba(255,255,255,.7);font-size:.82rem;line-height:1.6;margin-bottom:24px">
+            Ganti nilai <code style="background:rgba(255,255,255,.15);padding:2px 6px;border-radius:4px">GAS_URL</code>
+            di file <strong>index.html</strong> dengan URL deployment Google Apps Script parent.
+          </p>
+          <div style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);
+            border-radius:12px;padding:16px;max-width:360px;text-align:left">
+            <div style="font-size:.72rem;color:rgba(255,255,255,.5);margin-bottom:6px;font-weight:600">CONTOH:</div>
+            <code style="font-size:.72rem;color:#a7f3d0;word-break:break-all;line-height:1.6">
+              https://script.google.com/macros/s/<em>ID_DEPLOYMENT</em>/exec
+            </code>
+          </div>
+        </div>`;
+    }
+
+    // ── BACK BUTTON (Android) ──
+    window.addEventListener('popstate', () => {
+      const iframe = document.getElementById('appIframe');
+      try { iframe.contentWindow.history.back(); } catch(e) {}
+    });
+
+    // Push state agar popstate bisa di-intercept
+    if (isAndroid) {
+      history.pushState({ pwa: true }, '');
+    }
+
+    // ── START ──
+    window.addEventListener('DOMContentLoaded', () => {
+      loadApp();
+    });
+  </script>
+</body>
+</html>
