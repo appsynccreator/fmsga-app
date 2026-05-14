@@ -1,99 +1,34 @@
-# 📱 FMSGA PWA – Panduan Deploy & Instalasi
+Deskripsi Aplikasi FMS GA — Mayapada Hospital Bandung
+Appsync FMS GA adalah sistem manajemen fasilitas terintegrasi berbasis web yang dikembangkan khusus untuk Departemen FMS-GA & K3L Mayapada Hospital Bandung. Dibangun di atas platform Google Apps Script dengan Google Sheets sebagai backend database, aplikasi ini menggabungkan seluruh kegiatan operasional departemen dalam satu antarmuka yang dapat diakses dari perangkat desktop maupun mobile.
 
-## File yang Diperlukan
+Modul Utama
+FMS — Facility Management System
+Mengelola seluruh siklus peralatan dan fasilitas medis, meliputi:
 
-```
-fmsga-pwa/
-├── index.html          ← App shell utama (file ini)
-├── manifest.json       ← PWA manifest
-├── sw.js               ← Service Worker
-├── generate-icons.html ← Generator icon (buka sekali di browser)
-├── icon-192.png        ← Icon app (generate dulu)
-└── icon-512.png        ← Icon app besar (generate dulu)
-```
+Asset Management — Pencatatan data aset lengkap beserta riwayat perawatan
+Preventive Maintenance — Penjadwalan PM otomatis dengan kalkulasi periode (harian, mingguan, bulanan, tahunan), pembuatan jadwal berikutnya otomatis setelah PM selesai, dan pencatatan parameter teknis
+Corrective Maintenance — Pelaporan kerusakan dan tindak perbaikan dengan tracking status
+Daily Inspection — Pencatatan inspeksi harian per shift dengan parameter kondisi alat
+Uji Fungsi System — Pengujian fungsi peralatan dengan parameter dan standar per kategori alat
+Tools Kit Engineering — Pengelolaan inventaris peralatan teknisi beserta stok opname
+Logistik Teknik — Manajemen barang masuk/keluar dengan perhitungan stok akhir otomatis
+Facility Audit — Pencatatan temuan audit dan pemantauan status tindak lanjut
 
----
+GA — General Affairs
+Mendukung kegiatan operasional umum departemen termasuk pemantauan aktivitas harian, pengelolaan kendaraan dinas, dan kebutuhan administrasi fasilitas.
+K3L — Kesehatan, Keselamatan Kerja & Lingkungan
+Modul pengawasan dan pemantauan aspek K3L di lingkungan rumah sakit, mencakup supervisi keselamatan dan monitoring indikator lingkungan.
 
-## Langkah 1 — Generate Icon
+Fitur Sistem
 
-1. Buka file `generate-icons.html` di browser
-2. Klik **"Download icon-192.png"** dan **"Download icon-512.png"**
-3. Letakkan kedua file PNG di folder yang sama dengan `index.html`
+Dashboard real-time — Ringkasan KPI meliputi total aset, capaian PM, inspection rate, dan critical alert
+Role-based access control — Pembatasan akses menu per pengguna berdasarkan role (Super Admin, Admin, Operator)
+Auto-login via Google Account — Kemudahan login bagi Admin menggunakan akun Google aktif
+Pencatatan parameter terstruktur — Setiap PM, inspeksi, dan uji fungsi mencatat parameter teknis sesuai standar per kategori alat
+Report & Export — Ekspor data ke Excel dan PDF langsung dari aplikasi
+Barcode scanning — Identifikasi aset melalui kode barcode/QR
+Grafik capaian — Visualisasi pencapaian PM dan inspeksi bulanan sepanjang tahun
 
----
 
-## Langkah 2 — Konfigurasi URL GAS
-
-Buka `index.html`, cari baris:
-
-```js
-const GAS_URL = 'GANTI_DENGAN_URL_GAS_PARENT';
-```
-
-Ganti dengan URL deployment Google Apps Script parent, contoh:
-
-```js
-const GAS_URL = 'https://script.google.com/macros/s/AKfycb.../exec';
-```
-
----
-
-## Langkah 3 — Deploy (pilih salah satu)
-
-### Opsi A: GitHub Pages ⭐ (Gratis, Direkomendasikan)
-
-1. Buat repository baru di [github.com](https://github.com) (nama bebas, mis. `fmsga-app`)
-2. Upload semua file ke repository
-3. Buka **Settings → Pages → Source → main / (root)**
-4. URL app akan menjadi: `https://[username].github.io/fmsga-app/`
-
-### Opsi B: Netlify Drop (Paling Mudah)
-
-1. Buka [app.netlify.com/drop](https://app.netlify.com/drop)
-2. Drag & drop seluruh folder ke halaman tersebut
-3. URL langsung aktif dalam hitungan detik
-
-### Opsi C: Server Internal Rumah Sakit
-
-Upload semua file ke web server internal (Apache/Nginx).
-**Wajib HTTPS** agar Service Worker dan PWA install bisa berfungsi.
-
----
-
-## Langkah 4 — Instalasi di Smartphone
-
-### Android (Chrome) — Otomatis
-Setelah membuka URL di Chrome Android, banner **"Pasang di layar utama"** akan muncul otomatis setelah beberapa detik. Ketuk **"Pasang"**.
-
-### iPhone / iPad (Safari) — Manual
-Banner panduan akan muncul otomatis. Ikuti langkah:
-1. Ketuk ikon **Share** (kotak dengan panah ke atas) di Safari
-2. Pilih **"Add to Home Screen"**
-3. Ketuk **"Add"**
-
----
-
-## Fitur PWA
-
-| Fitur | Keterangan |
-|---|---|
-| 📱 Install ke Home Screen | Android otomatis, iOS via Safari |
-| 🖥 Full Screen | Tampil seperti app native tanpa browser bar |
-| ⚡ Splash Screen | Branded splash saat pertama buka |
-| 📶 Offline Detection | Banner otomatis jika tidak ada koneksi |
-| 🔄 Auto Update | Notifikasi saat ada versi baru |
-| 🔒 HTTPS Ready | Wajib untuk PWA (GitHub Pages/Netlify sudah HTTPS) |
-
----
-
-## Catatan Penting
-
-- **Service Worker tidak bisa cache halaman GAS** (karena domain `script.google.com` berbeda). 
-  App tetap butuh koneksi internet untuk beroperasi penuh.
-- Jika URL GAS berubah (re-deploy), cukup update `GAS_URL` di `index.html` dan upload ulang.
-- Untuk update app: edit file → upload ulang → user akan dapat notifikasi "Versi terbaru tersedia".
-
----
-
-*Dikembangkan untuk FMSGA Integrated System – Mayapada Hospital Bandung*
-*FMSGA Support MHBD · ext. 5920*
+Teknologi
+KomponenTeknologiPlatformGoogle Apps Script (Web App)DatabaseGoogle SheetsFrontendHTML, CSS, JavaScript (SPA)AutentikasiSession-based via CacheService + Google SSOAksesWeb browser (desktop & mobile)
