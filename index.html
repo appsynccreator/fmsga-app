@@ -41,6 +41,10 @@
       background: var(--teal);
       font-family: 'Poppins', sans-serif;
       -webkit-tap-highlight-color: transparent;
+      /* iOS: pastikan touch gesture tidak diblokir di level root */
+      touch-action: manipulation;
+      /* Gunakan dvh agar address bar Safari tidak geser layout */
+      height: 100dvh;
     }
 
     /* ── SPLASH SCREEN ── */
@@ -196,11 +200,15 @@
       position: fixed; inset: 0;
       padding-top: env(safe-area-inset-top);
       background: #f4f7fa;
+      overflow: hidden;
     }
     #appIframe {
       width: 100%; height: 100%;
       border: none; display: block;
       opacity: 0; transition: opacity .4s var(--ease);
+      /* iOS Safari: wajib agar scroll di dalam iframe berfungsi */
+      -webkit-overflow-scrolling: touch;
+      overflow: auto;
     }
     #appIframe.loaded { opacity: 1; }
 
@@ -252,6 +260,7 @@
       src="about:blank"
       allow="camera; microphone; geolocation"
       allowfullscreen
+      scrolling="yes"
     ></iframe>
   </div>
 
