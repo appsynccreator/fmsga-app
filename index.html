@@ -200,15 +200,27 @@
       position: fixed; inset: 0;
       padding-top: env(safe-area-inset-top);
       background: #f4f7fa;
-      overflow: hidden;
+    }
+    /* Wrapper scrollable yang menutup seluruh frame - iOS scroll fix */
+    #iframeScroller {
+      position: absolute; inset: 0;
+      overflow-y: scroll;
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+    }
+    /* Spacer mendorong #iframeScroller punya konten untuk discroll */
+    #iframeScroller::after {
+      content: '';
+      display: block;
+      height: 100.1%;
     }
     #appIframe {
+      position: absolute; inset: 0;
       width: 100%; height: 100%;
       border: none; display: block;
       opacity: 0; transition: opacity .4s var(--ease);
-      /* iOS Safari: wajib agar scroll di dalam iframe berfungsi */
-      -webkit-overflow-scrolling: touch;
-      overflow: auto;
+      transform: translateZ(0);
+      -webkit-transform: translateZ(0);
     }
     #appIframe.loaded { opacity: 1; }
 
@@ -255,13 +267,15 @@
 
   <!-- APP FRAME -->
   <div id="appFrame">
-    <iframe
-      id="appIframe"
-      src="about:blank"
-      allow="camera; microphone; geolocation"
-      allowfullscreen
-      scrolling="yes"
-    ></iframe>
+    <div id="iframeScroller">
+      <iframe
+        id="appIframe"
+        src="about:blank"
+        allow="camera; microphone; geolocation"
+        allowfullscreen
+        scrolling="yes"
+      ></iframe>
+    </div>
   </div>
 
   <!-- INSTALL BANNER (Android) -->
@@ -481,6 +495,50 @@
     if (isAndroid) {
       history.pushState({ pwa: true }, '');
     }
+
+    // ── IOS IFRAME SCROLL FIX ──
+    // Cross-origin iframe di iOS Safari tidak bisa discroll langsung.
+    // Kita intercept touchmove dari shell lalu kirim delta ke iframe via postMessage.
+    (function iosScrollFix() {
+      if (!/iphone|ipad|ipod/i.test(navigator.userAgent)) return;
+
+      let startY = 0, lastY = 0, velY = 0, lastTime = 0;
+      let rafId = null;
+
+      function sendScroll(dy) {
+        try {
+          const iw = document.getElementById('appIframe').contentWindow;
+          if (iw) iw.postMessage({ type: 'FMSGA_SCROLL', dy: dy }, '*');
+        } catch(e) {}
+      }
+
+      document.addEventListener('touchstart', function(e) {
+        startY = lastY = e.touches[0].clientY;
+        velY = 0; lastTime = Date.now();
+        if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+      }, { passive: true });
+
+      document.addEventListener('touchmove', function(e) {
+        const now = Date.now();
+        const y = e.touches[0].clientY;
+        const dy = lastY - y;
+        velY = dy / Math.max(now - lastTime, 1) * 16;
+        lastY = y; lastTime = now;
+        sendScroll(dy);
+      }, { passive: true });
+
+      document.addEventListener('touchend', function() {
+        // momentum
+        let v = velY;
+        function momentum() {
+          if (Math.abs(v) < 0.5) return;
+          sendScroll(v);
+          v *= 0.92;
+          rafId = requestAnimationFrame(momentum);
+        }
+        rafId = requestAnimationFrame(momentum);
+      }, { passive: true });
+    })();
 
     // ── START ──
     window.addEventListener('DOMContentLoaded', () => {
