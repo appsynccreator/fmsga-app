@@ -41,10 +41,6 @@
       background: var(--teal);
       font-family: 'Poppins', sans-serif;
       -webkit-tap-highlight-color: transparent;
-      /* iOS: pastikan touch gesture tidak diblokir di level root */
-      touch-action: manipulation;
-      /* Gunakan dvh agar address bar Safari tidak geser layout */
-      height: 100dvh;
     }
 
     /* ── SPLASH SCREEN ── */
@@ -201,26 +197,10 @@
       padding-top: env(safe-area-inset-top);
       background: #f4f7fa;
     }
-    /* Wrapper scrollable yang menutup seluruh frame - iOS scroll fix */
-    #iframeScroller {
-      position: absolute; inset: 0;
-      overflow-y: scroll;
-      overflow-x: hidden;
-      -webkit-overflow-scrolling: touch;
-    }
-    /* Spacer mendorong #iframeScroller punya konten untuk discroll */
-    #iframeScroller::after {
-      content: '';
-      display: block;
-      height: 100.1%;
-    }
     #appIframe {
-      position: absolute; inset: 0;
       width: 100%; height: 100%;
       border: none; display: block;
       opacity: 0; transition: opacity .4s var(--ease);
-      transform: translateZ(0);
-      -webkit-transform: translateZ(0);
     }
     #appIframe.loaded { opacity: 1; }
 
@@ -267,15 +247,13 @@
 
   <!-- APP FRAME -->
   <div id="appFrame">
-    <div id="iframeScroller">
-      <iframe
-        id="appIframe"
-        src="about:blank"
-        allow="camera; microphone; geolocation"
-        allowfullscreen
-        scrolling="yes"
-      ></iframe>
-    </div>
+    <iframe
+      id="appIframe"
+      src="about:blank"
+      allow="camera; microphone; geolocation"
+      allowfullscreen
+      scrolling="yes"
+    ></iframe>
   </div>
 
   <!-- INSTALL BANNER (Android) -->
@@ -496,49 +474,32 @@
       history.pushState({ pwa: true }, '');
     }
 
-    // ── IOS IFRAME SCROLL FIX ──
-    // Cross-origin iframe di iOS Safari tidak bisa discroll langsung.
-    // Kita intercept touchmove dari shell lalu kirim delta ke iframe via postMessage.
-    (function iosScrollFix() {
-      if (!/iphone|ipad|ipod/i.test(navigator.userAgent)) return;
-
-      let startY = 0, lastY = 0, velY = 0, lastTime = 0;
-      let rafId = null;
-
-      function sendScroll(dy) {
-        try {
-          const iw = document.getElementById('appIframe').contentWindow;
-          if (iw) iw.postMessage({ type: 'FMSGA_SCROLL', dy: dy }, '*');
-        } catch(e) {}
-      }
+    // ── iOS SCROLL RELAY ──
+    // iOS Safari memblokir scroll di cross-origin iframe secara native.
+    // Solusi: tangkap touchmove di shell (index_github.html), relay ke iframe via postMessage.
+    // Di dalam iframe (index_FMSGA.html), FMSGA_SCROLL handler meneruskan ke elemen scrollable.
+    if (isIos) {
+      let _touchStartY = 0;
+      let _touchLastY  = 0;
 
       document.addEventListener('touchstart', function(e) {
-        startY = lastY = e.touches[0].clientY;
-        velY = 0; lastTime = Date.now();
-        if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+        _touchStartY = e.touches[0].clientY;
+        _touchLastY  = _touchStartY;
       }, { passive: true });
 
       document.addEventListener('touchmove', function(e) {
-        const now = Date.now();
-        const y = e.touches[0].clientY;
-        const dy = lastY - y;
-        velY = dy / Math.max(now - lastTime, 1) * 16;
-        lastY = y; lastTime = now;
-        sendScroll(dy);
-      }, { passive: true });
+        const currentY = e.touches[0].clientY;
+        const dy = _touchLastY - currentY; // positif = scroll ke bawah
+        _touchLastY = currentY;
 
-      document.addEventListener('touchend', function() {
-        // momentum
-        let v = velY;
-        function momentum() {
-          if (Math.abs(v) < 0.5) return;
-          sendScroll(v);
-          v *= 0.92;
-          rafId = requestAnimationFrame(momentum);
+        const iframe = document.getElementById('appIframe');
+        if (iframe && iframe.contentWindow) {
+          try {
+            iframe.contentWindow.postMessage({ type: 'FMSGA_SCROLL', dy: dy }, '*');
+          } catch(err) {}
         }
-        rafId = requestAnimationFrame(momentum);
       }, { passive: true });
-    })();
+    }
 
     // ── START ──
     window.addEventListener('DOMContentLoaded', () => {
